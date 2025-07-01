@@ -1,0 +1,433 @@
+basePath: /api
+definitions:
+  api.CreateTaskRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      due_date:
+        type: string
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
+  api.ListTasksResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.Task'
+        type: array
+      total:
+        type: integer
+    type: object
+  api.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.RegisterRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  api.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.UpdatePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  api.UpdateTaskRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      due_date:
+        type: string
+      status:
+        enum:
+        - todo
+        - in_progress
+        - done
+        type: string
+      title:
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  model.Task:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: TodoList 项目的 API 文档
+  title: TodoList API
+  version: "1.0"
+paths:
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的任务列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 任务状态
+        enum:
+        - todo
+        - in_progress
+        - done
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/api.ListTasksResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 获取任务列表
+      tags:
+      - 任务管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新任务
+      parameters:
+      - description: 任务信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Task'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 创建任务
+      tags:
+      - 任务管理
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定任务
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 删除任务
+      tags:
+      - 任务管理
+    get:
+      consumes:
+      - application/json
+      description: 获取指定任务的详细信息
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Task'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 获取任务详情
+      tags:
+      - 任务管理
+    put:
+      consumes:
+      - application/json
+      description: 更新任务信息
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 任务信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Task'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 更新任务
+      tags:
+      - 任务管理
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录并获取令牌
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: 用户登录
+      tags:
+      - 用户管理
+  /users/password:
+    put:
+      consumes:
+      - application/json
+      description: 更新用户密码
+      parameters:
+      - description: 密码更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 密码更新成功
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      security:
+      - Bearer: []
+      summary: 更新密码
+      tags:
+      - 用户管理
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: 用户注册
+      tags:
+      - 用户管理
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

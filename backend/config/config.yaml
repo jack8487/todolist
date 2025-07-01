@@ -1,0 +1,43 @@
+# 服务器配置
+server:
+  port: 8080
+  mode: "debug" # debug or release
+
+# MySQL配置
+mysql:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "1234"
+  database: "todolist"
+  charset: "utf8mb4"
+  parse_time: true
+  loc: "Local"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600 # 单位：秒
+
+# Redis配置
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 100
+  min_idle_conns: 10
+  max_conn_lifetime: 3600 # 单位：秒
+
+# JWT配置
+jwt:
+  secret_key: "jack"
+  expire_hours: 24 # token过期时间，单位：小时
+  issuer: "todolist"
+
+# 日志配置
+log:
+  level: "debug" # debug, info, warn, error
+  filename: "logs/todolist.log"
+  max_size: 100    # 单位：MB
+  max_age: 30      # 单位：天
+  max_backups: 10  # 最大备份数
+  compress: true   # 是否压缩
