@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"todolist/internal/middleware"
 	"todolist/internal/service"
 )
 
@@ -67,6 +68,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 // @Param request body LoginRequest true "登录信息"
 // @Success 200 {object} Response{data=string} "登录成功"
 // @Failure 400 {object} Response{} "请求参数错误"
+// @Failure 401 {object} Response{} "用户名或密码错误"
 // @Failure 500 {object} Response{} "服务器内部错误"
 // @Router /users/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
@@ -82,11 +84,20 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	token, err := h.userService.Login(req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, Response{
-			Code:    500,
-			Message: "登录失败",
-			Error:   err.Error(),
-		})
+		switch err {
+		case service.ErrUserNotFound, service.ErrInvalidPassword:
+			c.JSON(http.StatusUnauthorized, Response{
+				Code:    401,
+				Message: "用户名或密码错误",
+				Error:   err.Error(),
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, Response{
+				Code:    500,
+				Message: "登录失败",
+				Error:   err.Error(),
+			})
+		}
 		return
 	}
 
@@ -138,13 +149,47 @@ func (h *UserHandler) UpdatePassword(c *gin.Context) {
 	})
 }
 
+// GetInfo godoc
+// @Summary 获取用户信息
+// @Description 获取当前登录用户的信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} Response{data=model.User} "获取成功"
+// @Failure 401 {object} Response{} "未授权"
+// @Failure 500 {object} Response{} "服务器内部错误"
+// @Router /users/info [get]
+func (h *UserHandler) GetInfo(c *gin.Context) {
+	userID := c.GetInt("user_id")
+	user, err := h.userService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Response{
+			Code:    500,
+			Message: "获取用户信息失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	// 不返回密码等敏感信息
+	user.PasswordHash = ""
+
+	c.JSON(http.StatusOK, Response{
+		Code:    200,
+		Message: "获取用户信息成功",
+		Data:    user,
+	})
+}
+
 // RegisterRoutes 注册路由
 func (h *UserHandler) RegisterRoutes(r *gin.Engine) {
-	users := r.Group("/api/users")
+	users := r.Group("/api/v1/users")
 	{
 		users.POST("/register", h.Register)
 		users.POST("/login", h.Login)
-		users.PUT("/password", h.UpdatePassword)
+		users.GET("/info", middleware.AuthMiddleware(), h.GetInfo)
+		users.PUT("/password", middleware.AuthMiddleware(), h.UpdatePassword)
 	}
 }
 

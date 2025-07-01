@@ -10,6 +10,7 @@ import (
 	"todolist/config"
 	"todolist/docs"
 	"todolist/internal/api"
+	"todolist/internal/middleware"
 	"todolist/internal/repository"
 	"todolist/internal/service"
 )
@@ -37,6 +38,9 @@ func main() {
 
 	// 创建路由
 	r := gin.Default()
+
+	// 添加 CORS 中间件
+	r.Use(middleware.CORS())
 
 	// 设置 Swagger 配置
 	docs.SwaggerInfo.Title = "TodoList API"

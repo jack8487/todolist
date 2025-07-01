@@ -27,11 +27,11 @@ func NewTaskHandler(taskService service.TaskService) *TaskHandler {
 }
 
 // parseDateString 解析各种格式的日期字符串
-func parseDateString(dateStr string) (time.Time, error) {
+func parseDateString(dateStr string) (*time.Time, error) {
 	// 预处理日期字符串
 	dateStr = strings.TrimSpace(dateStr)
 	if dateStr == "" {
-		return time.Time{}, nil
+		return nil, nil
 	}
 
 	// 标准化分隔符
@@ -91,7 +91,7 @@ func parseDateString(dateStr string) (time.Time, error) {
 				continue
 			}
 
-			return t, nil
+			return &t, nil
 		}
 		lastErr = err
 	}
@@ -100,18 +100,20 @@ func parseDateString(dateStr string) (time.Time, error) {
 	if timestamp, err := strconv.ParseInt(dateStr, 10, 64); err == nil {
 		// 处理秒级时间戳
 		if len(dateStr) == 10 {
-			return time.Unix(timestamp, 0), nil
+			t := time.Unix(timestamp, 0)
+			return &t, nil
 		}
 		// 处理毫秒级时间戳
 		if len(dateStr) == 13 {
-			return time.Unix(timestamp/1000, 0), nil
+			t := time.Unix(timestamp/1000, 0)
+			return &t, nil
 		}
 	}
 
 	if lastErr != nil {
-		return time.Time{}, lastErr
+		return nil, lastErr
 	}
-	return time.Time{}, nil
+	return nil, nil
 }
 
 // Create godoc
@@ -138,10 +140,9 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		return
 	}
 
-	var dueDate time.Time
+	var dueDate *time.Time
 	if req.DueDate != "" {
-		var err error
-		dueDate, err = parseDateString(req.DueDate)
+		parsedTime, err := parseDateString(req.DueDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, Response{
 				Code:    400,
@@ -150,6 +151,7 @@ func (h *TaskHandler) Create(c *gin.Context) {
 			})
 			return
 		}
+		dueDate = parsedTime
 	}
 
 	task := &model.Task{
@@ -219,10 +221,9 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var dueDate time.Time
+	var dueDate *time.Time
 	if req.DueDate != "" {
-		var err error
-		dueDate, err = parseDateString(req.DueDate)
+		parsedTime, err := parseDateString(req.DueDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, Response{
 				Code:    400,
@@ -231,6 +232,7 @@ func (h *TaskHandler) Update(c *gin.Context) {
 			})
 			return
 		}
+		dueDate = parsedTime
 	}
 
 	task := &model.Task{
@@ -414,7 +416,7 @@ func (h *TaskHandler) List(c *gin.Context) {
 
 // RegisterRoutes 注册路由
 func (h *TaskHandler) RegisterRoutes(r *gin.Engine) {
-	tasks := r.Group("/api/tasks")
+	tasks := r.Group("/api/v1/tasks")
 	tasks.Use(middleware.AuthMiddleware())
 	{
 		tasks.POST("", h.Create)

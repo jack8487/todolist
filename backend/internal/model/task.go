@@ -19,14 +19,14 @@ CREATE TABLE tasks (
 
 // Task 任务模型
 type Task struct {
-	ID          int       `json:"id" gorm:"primaryKey"`
-	UserID      int       `json:"user_id" gorm:"not null"`
-	Title       string    `json:"title" gorm:"size:100;not null"`
-	Description string    `json:"description" gorm:"size:500"`
-	Status      int       `json:"status" gorm:"type:tinyint;not null;default:0"`
-	DueDate     time.Time `json:"due_date"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          int        `json:"id" gorm:"primaryKey"`
+	UserID      int        `json:"user_id" gorm:"not null"`
+	Title       string     `json:"title" gorm:"size:100;not null"`
+	Description string     `json:"description" gorm:"size:500"`
+	Status      int        `json:"status" gorm:"type:tinyint;not null;default:0"`
+	DueDate     *time.Time `json:"due_date,omitempty" gorm:"default:null"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 // 任务状态常量

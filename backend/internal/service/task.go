@@ -55,13 +55,10 @@ func (s *taskService) Create(task *model.Task) error {
 		return err
 	}
 
-	// 验证截止日期
-	if err := s.validateDueDate(task.DueDate); err != nil {
-		return err
-	}
-
-	task.CreatedAt = time.Now()
-	task.UpdatedAt = time.Now()
+	// 设置创建和更新时间
+	now := time.Now()
+	task.CreatedAt = now
+	task.UpdatedAt = now
 
 	return s.taskRepo.Create(task)
 }
@@ -163,7 +160,8 @@ func (s *taskService) validateTaskDescription(description string) error {
 // validateDueDate 验证截止日期
 func (s *taskService) validateDueDate(dueDate time.Time) error {
 	if dueDate.IsZero() {
-		return ErrInvalidDueDate
+		return nil // 允许空的截止日期
 	}
+	// 可以添加其他日期验证逻辑，比如不允许过去的日期
 	return nil
 }
